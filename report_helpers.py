@@ -13,6 +13,7 @@ from copy import deepcopy
 # fit function that returns covariance matrix and fit parameters; sqrt of diagonal elements of
 # cov_matrix are the std deviation or gaussian error
 from scipy.optimize import curve_fit
+from scipy.stats import chisquare
 
 # get current path
 current_path = os.getcwd()
@@ -379,7 +380,7 @@ def plot(data, x_label=None, y_label=None, title=None, output_pdf=None,
                     y_err_fit = np.array(fit_data[n_fits][2])
 
                 # Fit to data 
-                fit_parameters, fit_cov = curve_fit(fit_func, x_fit, y_fit, p0[n_fits], y_err_fit)
+                fit_parameters, fit_cov = curve_fit(fit_func, x_fit, y_fit, p0[n_fits], y_err_fit, absolute_sigma=True)
 
                 # Deduce std. deviation from covariance matrix
                 fit_param_errors = np.sqrt(np.diag(fit_cov))
@@ -389,6 +390,9 @@ def plot(data, x_label=None, y_label=None, title=None, output_pdf=None,
                 ss_res = np.sum(np.power(residuals, 2))
                 ss_tot = np.sum(np.power((y_fit - np.mean(y_fit)), 2))
                 r_2 = 1. - (ss_res / ss_tot)
+
+                # Make chisquare
+                chi2, pval = chisquare(fit_func(x_fit, *fit_parameters), y_fit)
 
                 # Get arguments of fit function; dismiss 0th element since it represents variable
                 fit_args = inspect.getargspec(fit_func)[0][1:]
@@ -420,7 +424,8 @@ def plot(data, x_label=None, y_label=None, title=None, output_pdf=None,
                                                                                                      fit_param_errors[
                                                                                                          i] + '$' + '\n'
                     fit_label += add_str
-                fit_label += r'$\mathrm{R^2 = %.5f}$' % r_2 + '\n'
+                #fit_label += r'$\mathrm{R^2 = %.5f}$' % r_2 + '\n'
+                fit_label += r'$\mathrm{\chi^2 = %.5f}$' % chi2 + '\n'
 
                 # See https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.errorbar.html for explanaition
                 fit_kwargs = {}
